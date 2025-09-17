@@ -1,74 +1,115 @@
-# Astro Supabase Starter
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Event Management - SSS Radio</title>
+  <style>
+    body { font-family: Arial; background: #f4f8fc; margin: 0; padding: 20px; }
+    .container { max-width: 800px; margin:auto; background:#fff; padding:20px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+    h1 { text-align:center; color:#0073e6; margin-bottom:20px;}
+    label {display:block; margin:12px 0 6px; font-weight:bold;}
+    input {width:100%; padding:8px; margin-bottom:15px; border:1px solid #ccc; border-radius:6px;}
+    button {background:#0073e6; color:white; padding:10px; border:none; border-radius:6px; cursor:pointer;}
+    button:hover {background:#005bb5;}
+    .summary {margin-top:20px; padding:15px; background:#f0f8ff; border-radius:8px; display:none;}
+    .qr-section {margin-top:20px; text-align:center; display:none;}
+    .qr-section a {display:inline-block; margin-top:10px; background:#00b894; color:white; padding:8px 14px; border-radius:6px; text-decoration:none;}
+    footer {margin-top:30px; text-align:center; font-size:14px; color:#555;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎶 SSS Radio Set Management</h1>
+    <form id="orderForm">
+      <label>Event Name:</label>
+      <input type="text" id="eventName" required>
+      <label>Full Name:</label>
+      <input type="text" id="name" required>
+      <label>Phone Number:</label>
+      <input type="tel" id="phone" required placeholder="+91 9876543210">
+      <label>Email:</label>
+      <input type="email" id="email" required placeholder="example@email.com">
+      <label>Chairs:</label><input type="number" id="chairs" min="0">
+      <label>Tables:</label><input type="number" id="tables" min="0">
+      <label>Zoomers:</label><input type="number" id="zoomers" min="0">
+      <label>Speakers:</label><input type="number" id="speakers" min="0">
+      <label>Lights:</label><input type="number" id="lights" min="0">
+      <label>Cooking Materials:</label><input type="number" id="cooking" min="0">
+      <label>Advance Payment (₹):</label><input type="number" id="advance" min="0" required>
+      <button type="button" onclick="submitOrder()">Submit Order</button>
+    </form>
 
-![Astro Supabase Starter Preview](astro-supabase-starter-preview.png)
+    <div class="summary" id="summary"></div>
+    <div class="qr-section" id="payment">
+      <h3>💳 Advance Payment</h3>
+      <p>Scan QR or click the button:</p>
+      <img id="qr" width="200" height="200">
+      <br>
+      <a id="upiLink" target="_blank">Pay Advance</a>
+    </div>
+  </div>
 
-**View demo:** [https://astro-supabase-starter.netlify.app/](https://astro-supabase-starter.netlify.app/)
+  <footer>📞 Contact: +91 9789750637 | 📍 Dharmapuri, Tamil Nadu</footer>
 
-The Astro Supabase starter demonstrates how to integrate **Supabase** into an Astro project deployed on Netlify.
+  <script>
+    function submitOrder() {
+      const data = {
+        eventName: document.getElementById("eventName").value,
+        name: document.getElementById("name").value,
+        phone: document.getElementById("phone").value,
+        email: document.getElementById("email").value,
+        chairs: parseInt(document.getElementById("chairs").value||0),
+        tables: parseInt(document.getElementById("tables").value||0),
+        zoomers: parseInt(document.getElementById("zoomers").value||0),
+        speakers: parseInt(document.getElementById("speakers").value||0),
+        lights: parseInt(document.getElementById("lights").value||0),
+        cooking: parseInt(document.getElementById("cooking").value||0),
+        advancePayment: parseInt(document.getElementById("advance").value||0),
+      };
 
-## Deploying to Netlify
+      const prices = { chairs:10, tables:50, zoomers:2000, speakers:1250, lights:150, cooking:5000 };
+      data.totalCost = data.chairs*prices.chairs + data.tables*prices.tables + data.zoomers*prices.zoomers +
+                       data.speakers*prices.speakers + data.lights*prices.lights + data.cooking*prices.cooking;
+      data.remainingPayment = data.totalCost - data.advancePayment;
 
-If you click "Deploy to Netlify" button, it will create a new repo for you that looks exactly like this one, and sets that repo up immediately for deployment on Netlify.
+      if(data.advancePayment<=0){ alert("⚠️ Enter valid advance amount"); return;}
 
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/netlify-templates/astro-supabase-starter&fullConfiguration=true)
+      // Show summary
+      const summaryDiv = document.getElementById("summary");
+      summaryDiv.style.display = "block";
+      summaryDiv.innerHTML = `
+        <h3>✅ Order Confirmed</h3>
+        <p><strong>Event:</strong> ${data.eventName}</p>
+        <p><strong>Name:</strong> ${data.name}</p>
+        <p><strong>Phone:</strong> ${data.phone}</p>
+        <p><strong>Email:</strong> ${data.email}</p>
+        <hr>
+        <p><strong>Total:</strong> ₹${data.totalCost}</p>
+        <p><strong>Advance:</strong> ₹${data.advancePayment}</p>
+        <p><strong>Remaining:</strong> ₹${data.remainingPayment}</p>
+      `;
 
-## Astro Commands
+      // UPI QR code
+      const upiId = "venkataadhav9867@oksbi";
+      const payUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(data.name)}&am=${data.advancePayment}&cu=INR`;
+      document.getElementById("qr").src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(payUrl)}`;
+      document.getElementById("upiLink").href = payUrl;
+      document.getElementById("upiLink").innerText = `Pay Advance ₹${data.advancePayment}`;
+      document.getElementById("payment").style.display = "block";
 
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## Developing Locally
-
-| Prerequisites                                                                |
-| :--------------------------------------------------------------------------- |
-| [Node.js](https://nodejs.org/) v18.14+                                       |
-| (optional) [nvm](https://github.com/nvm-sh/nvm) for Node version management  |
-| [Netlify account](https://netlify.com/)                                      |
-| [Netlify CLI](https://docs.netlify.com/cli/get-started/).                    |
-| [Supabase account](https://supabase.com/)                                    |
-
-### Set up the database
-
-To use this template, you’ll need to set up and seed a new Supabase database.
-
-1. Create a new Supabase project.
-2. Run the SQL commands found in the `supabase/migrations` directory in the Supabase UI.
-3. To seed the database with data, you can import the contents of the `supabase/seed.csv` file in the Supabase UI.
-
-ℹ️ _Note: This template was created to be used with the Supabase extension for Netlify. If you don’t wish to use the Netlify Supabase extension, you will need to set the `SUPABASE_DATABASE_URL` and `SUPABASE_ANON_KEY` environment variables in the `.env` file._
-
-### Install and run locally
-
-1. Clone this repository, then run `npm install` in its root directory.
-
-2. For the starter to have full functionality locally, please ensure you have an up-to-date version of Netlify CLI. Run:
-
-```
-npm install netlify-cli@latest -g
-```
-
-3. Link your local repository to the deployed Netlify site. This will ensure you're using the same runtime version for both local development and your deployed site.
-
-```
-netlify link
-```
-
-4. Then, run the Astro.js development server via Netlify CLI:
-
-```
-netlify dev --target-port 4321
-```
-
-If your browser doesn't navigate to the site automatically, visit [localhost:8888](http://localhost:8888).
-
-## Support
-
-If you get stuck along the way, get help in our [support forums](https://answers.netlify.com/).
+      // Send SMS to Event Management
+      fetch("/send-sms", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(data)
+      })
+      .then(res=>res.json())
+      .then(res=>{
+        if(res.success){ alert("✅ SMS sent to Event Management number"); }
+        else{ alert("❌ SMS failed: "+res.error);}
+      })
+      .catch(err=>alert("❌ Error sending SMS: "+err));
+    }
+  </script>
+</body>
+</html>
